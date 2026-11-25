@@ -22,8 +22,29 @@ LINE_2 = (
 )
 
 
+def build_text() -> str:
+    """Return the two-line entry (trailing newline included)."""
+    return LINE_1 + "\n" + LINE_2 + "\n"
+
+
+def clean_output_dir(out_dir: str) -> None:
+    """Remove the contents of the output folder, never the folder itself.
+
+    The grader mounts the output folder, so removing it fails with EPERM.
+    """
+    os.makedirs(out_dir, exist_ok=True)
+    for name in os.listdir(out_dir):
+        if name == "entry.txt":
+            continue
+        path = os.path.join(out_dir, name)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
+
+
 def main() -> int:
-    text = LINE_1 + "\n" + LINE_2 + "\n"
+    text = build_text()
     lines = text.rstrip("\n").split("\n")
     assert len(lines) == 2, f"expected exactly 2 lines, got {len(lines)}"
     assert all(line.strip() for line in lines), "lines must not be blank"
@@ -32,17 +53,7 @@ def main() -> int:
     )
 
     out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
-    os.makedirs(out_dir, exist_ok=True)
-    # Clean only the contents of the output folder, never the folder itself:
-    # the grader mounts it and removing it fails with EPERM.
-    for name in os.listdir(out_dir):
-        path = os.path.join(out_dir, name)
-        if name == "entry.txt":
-            continue
-        if os.path.isdir(path):
-            shutil.rmtree(path)
-        else:
-            os.remove(path)
+    clean_output_dir(out_dir)
 
     out_path = os.path.join(out_dir, "entry.txt")
     with open(out_path, "w", encoding="utf-8", newline="\n") as fh:
